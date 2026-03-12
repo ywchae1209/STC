@@ -24,7 +24,8 @@
 
 * 무엇을 공개 것인가?
 * "상태"문제
-
+* 
+> 모듈의 분할은 설계의 첫단계
 
 ## C 언어에서 사용가능한 모듈화 방법
 
@@ -248,6 +249,145 @@ static int validate_input(const char* input) {
 static void cleanup_resources(void) {
     // 구현...
 }
+```
+
+## 모듈 분할 사례
+
+* Data중심 분할
+
+```c++
+// person.h
+#ifndef PERSON_H
+#define PERSON_H
+
+typedef struct {
+    char name[64];
+    int age;
+    char email[128];
+} person_t;
+
+// person만 다루는 함수들
+person_t* person_create(const char* name, int age);
+void person_destroy(person_t* person);
+void person_set_email(person_t* person, const char* email);
+const char* person_get_name(const person_t* person);
+void person_print(const person_t* person);
+
+#endif
+```
+
+```c++
+// person.h
+#ifndef PERSON_H
+#define PERSON_H
+
+typedef struct {
+    char name[64];
+    int age;
+    char email[128];
+} person_t;
+
+// person만 다루는 함수들
+person_t* person_create(const char* name, int age);
+void person_destroy(person_t* person);
+void person_set_email(person_t* person, const char* email);
+const char* person_get_name(const person_t* person);
+void person_print(const person_t* person);
+
+#endif
+```
+
+* action with some-type 
+```c++
+// geometry.h
+#ifndef GEOMETRY_H
+#define GEOMETRY_H
+
+#include "point.h"
+#include "circle.h"
+
+// 각 타입의 기본 함수들
+point_t point_create(double x, double y);
+double point_distance(const point_t* p1, const point_t* p2);
+void point_print(const point_t* point);
+
+circle_t circle_create(point_t center, double radius);
+double circle_area(const circle_t* circle);
+double circle_circumference(const circle_t* circle);
+
+// 두 타입을 함께 사용하는 함수들 (자연스럽게 같은 모듈에)
+bool point_in_circle(const point_t* point, const circle_t* circle);
+point_t circle_point_at_angle(const circle_t* circle, double angle);
+bool circles_intersect(const circle_t* c1, const circle_t* c2);
+
+#endif
+```
+
+* more
+```c++
+#ifndef SHAPE_H
+#define SHAPE_H
+
+typedef enum {
+    SHAPE_RECTANGLE,
+    SHAPE_CIRCLE,
+    SHAPE_TRIANGLE
+} shape_type_t;
+
+typedef struct shape shape_t;
+
+// 가상 함수 테이블
+typedef struct {
+    void (*draw)(const shape_t* shape);
+    double (*area)(const shape_t* shape);
+    void (*move)(shape_t* shape, int dx, int dy);
+    void (*destroy)(shape_t* shape);
+} shape_vtable_t;
+
+// 기본 shape 구조
+struct shape {
+    shape_type_t type;
+    position_t position;
+    const shape_vtable_t* vtable;
+};
+#endif
+```
+
+```c++
+#ifndef GRAPHICS_BASE_H
+#define GRAPHICS_BASE_H
+
+#include "position.h"
+#include "shape.h"
+
+void shape_draw(const shape_t* shape);
+double shape_area(const shape_t* shape);
+void shape_move(shape_t* shape, int dx, int dy);
+void shape_destroy(shape_t* shape);
+
+#endif
+```
+
+* sample practice
+
+```
+// 각 타입별 기본 모듈
+person.h/c      // person_t 관련 기본 함수들
+product.h/c     // product_t 관련 기본 함수들
+
+//  관계/상호작용 모듈  
+transaction.h/c // person + product 상호작용
+inventory.h/c   // product 컬렉션 관리
+customer.h/c    // person 확장 기능
+
+//  유틸리티/헬퍼 모듈
+business_logic.h/c  // 복잡한 비즈니스 로직
+validation.h/c      // 검증 함수들
+conversion.h/c      // 타입 간 변환
+
+// 시스템/매니저 모듈
+app_manager.h/c     // 전체 시스템 관리
+database_layer.h/c  // 영속성 계층
 ```
 
 # 5. Naming
