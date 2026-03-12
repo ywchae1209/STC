@@ -1327,3 +1327,76 @@ bool file_manager_open(file_manager_t* manager, const char* filename) {
     return manager->open_func(manager, filename);
 }
 ```
+
+### 3. Tip : Compiler 최적화를 통한 stack-buffer의 번거로움 해소
+
+* 목아프게 공부하라고 하는 이유.
+  
+```c++
+// 여러분의 코드
+// out parameter 방식
+// -------------------------------------------------------
+#include <stdio.h>
+
+// function: caller가 준비한 버퍼에 직접 채움
+void f(char c, char* out, size_t out_sz) {
+    for (size_t i = 0; i < out_sz; i++) {
+        out[i] = c;
+    }
+}
+
+// caller2: 단순히 f를 호출 
+void caller2(char c, char* out, size_t out_sz) {
+    f(c, out, out_sz);
+}
+
+// caller1: 최종 버퍼 준비
+int main() {
+    char buf[1024];                // <<<<<< 
+    caller2('A', buf, 1024);
+
+    printf("First: %c, Last: %c\n", buf[0], buf[1023]);
+    return 0;
+}
+```
+
+* compiler 최적화를 공부한 사람의 코드
+
+```c++
+// 컴파일러 최적화를 이용하는 방식 : assembly 코드는 동일한 수준으로 최적화됨.
+// RVO(Return Value Optimization)/NRVO(Named Return Value Optimization)부름.(C++용어이긴함)
+// c99이상 지원하는 컴파일러(gcc, clang, msvc 등)에서 제공됨. ( -O2, -O3 )
+// 빌드 스크립트를 정돈해야 하는 이유이기도 함.
+// 주의) 최적화를 off한다면, 복사비용이 호출횟수만큼 발생
+// -------------------------------------------------------
+#include <stdio.h>
+
+// 단, automatic storage사용할 것이므로, 고정size써야하는 건 마찬가지.
+typedef struct {
+    char buf[1024];  
+} StringBuf;
+
+// function: 큰 struct 반환
+// 인자를 봐라.
+StringBuf f(char c) {
+    StringBuf s;
+    for (int i = 0; i < 1024; i++) {
+        s.buf[i] = c;
+    }
+    return s; // ABI 규칙에 따라 caller 버퍼에 직접 작성됨
+}
+
+// caller2: f를 호출해서 struct 반환
+// 인자를 봐라.
+StringBuf caller2(char c) {
+    return f(c);
+}
+
+// caller1: 최종 결과 받음
+int main() {
+    StringBuf result = caller2('B');
+
+    printf("First: %c, Last: %c\n", result.buf[0], result.buf[1023]);
+    return 0;
+}
+```
