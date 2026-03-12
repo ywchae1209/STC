@@ -1363,10 +1363,11 @@ int main() {
 * compiler 최적화를 공부한 사람의 코드
 
 ```c++
-// 컴파일러 최적화를 이용하는 방식 : assembly 코드는 동일한 수준으로 최적화됨.
-// RVO(Return Value Optimization)/NRVO(Named Return Value Optimization)부름.(C++용어이긴함)
+// 컴파일러 최적화를 이용하는 방식 : 동일한 성능수준으로 최적화됨.
+// RVO(Return Value Optimization)/NRVO(Named Return Value Optimization)부름.
+// (C++에서 쓰이는 용어지만 C에서도 같은 개념으로 이해하면 됨.)
 // c99이상 지원하는 컴파일러(gcc, clang, msvc 등)에서 제공됨. ( -O2, -O3 )
-// 빌드 스크립트를 정돈해야 하는 이유이기도 함.
+// 빌드 스크립트를 정돈해야 하는 이유이기도 함.(약간 뜬금 없으나...)
 // 주의) 최적화를 off한다면, 복사비용이 호출횟수만큼 발생
 // -------------------------------------------------------
 #include <stdio.h>
@@ -1376,8 +1377,7 @@ typedef struct {
     char buf[1024];  
 } StringBuf;
 
-// function: 큰 struct 반환
-// 인자를 봐라.
+// function: 큰 struct 반환 :: 인자를 봐라.
 StringBuf f(char c) {
     StringBuf s;
     for (int i = 0; i < 1024; i++) {
@@ -1386,8 +1386,7 @@ StringBuf f(char c) {
     return s; // ABI 규칙에 따라 caller 버퍼에 직접 작성됨
 }
 
-// caller2: f를 호출해서 struct 반환
-// 인자를 봐라.
+// caller2: f를 호출해서 struct 반환 :: 인자를 봐라.
 StringBuf caller2(char c) {
     return f(c);
 }
