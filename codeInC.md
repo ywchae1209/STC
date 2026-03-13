@@ -42,16 +42,15 @@
 ```c++
 // test.c
 
-int a;
-extern int b;
+int a;                        // ?
+extern int b;                 // X
 static int c;
 
-// declaration
-void f( int d, const int e)   // definition
+void f( int d, const int e)
 {
     int h;
-    static int i;
-    extern int j;
+    static int i;            // X
+    extern int j;            // X
 }
 
 static void g() {             // static 
